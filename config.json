@@ -120,78 +120,13 @@
     ],
     "rules_list": [
         {
-            "name": "Custom Rules",
-            "type": "adblock",
-            "default_action": "REJECT",
-            "unsupport_convert": "REGEX",
-            "unsupport_action": "REJECT",
-            "exclude_action": "DIRECT",
-            "file_prefix": "custom",
-            "url": "file://./adblock/custom-block-domains.txt"
-        },
-        {
-            "name": "EasyPrivacy",
-            "type": "adblock",
-            "default_action": "REJECT",
-            "unsupport_convert": "REGEX",
-            "unsupport_action": "REJECT",
-            "exclude_action": "IGNORE",
-            "file_prefix": "easyprivacy",
-            "url": "https://easylist.to/easylist/easyprivacy.txt"
-        },
-        {
-            "name": "EasyList",
-            "type": "adblock",
-            "default_action": "REJECT",
-            "unsupport_convert": "REGEX",
-            "unsupport_action": "REJECT",
-            "exclude_action": "IGNORE",
-            "file_prefix": "easylist",
-            "url": "https://easylist.to/easylist/easylist.txt"
-        },
-        {
-            "name": "EasyList CHN",
-            "type": "adblock",
-            "default_action": "REJECT",
-            "unsupport_convert": "REGEX",
-            "unsupport_action": "REJECT",
-            "exclude_action": "IGNORE",
-            "file_prefix": "easylist-chn",
-            "url": "https://easylist-downloads.adblockplus.org/easylistchina.txt"
-        },
-        {
-            "name": "GFWlist",
-            "type": "gfwlist",
-            "default_action": "PROXY",
-            "unsupport_convert": "HOST-SUFFIX",
-            "unsupport_action": "PROXY",
-            "file_prefix": "gfwlist",
-            "url": "https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt"
-        },
-        {
-            "name": "yoyo HOSTS",
-            "type": "hosts",
-            "action_type": "HOST-SUFFIX",
-            "action": "REJECT",
-            "file_prefix": "yoyo-hosts",
-            "url": "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=1&mimetype=plaintext"
-        },
-        {
-            "name": "MVPS HOSTS",
-            "type": "hosts",
-            "action_type": "HOST-SUFFIX",
-            "action": "REJECT",
-            "file_prefix": "mvps-hosts",
-            "url": "http://winhelp2002.mvps.org/hosts.txt"
-        },
-        {
             "name": "AdGuard DNS Filter",
             "type": "adblock",
             "action_type": "HOST-SUFFIX",
             "action": "REJECT",
             "exclude_action": "IGNORE",
             "file_prefix": "adguard-dns",
-            "url": "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt"
+            "url": "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt"
         }
     ]
 }
