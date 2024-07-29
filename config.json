@@ -41,7 +41,7 @@
             "action": "REJECT",
             "exclude_action": "IGNORE",
             "file_prefix": "adguard-dns",
-            "url": "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt"
+            "url": "https://ad.yuwell.dynv6.net/dns.txt"
         }
     ]
 }
