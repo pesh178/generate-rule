@@ -42,7 +42,7 @@
             "exclude_action": "IGNORE",
             "file_prefix": "adguard-dns",
             "url": "https://raw.githubusercontent.com/8680/GOODBYEADS/master/data/rules/adblock.txt"
-        }
+        },
         {
             "name": "White AdGuard DNS Filter",
             "type": "adblock",
