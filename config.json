@@ -50,7 +50,7 @@
             "action": "DIRECT",
             "exclude_action": "IGNORE",
             "file_prefix": "White-adguard-dns",
-            "url": "https://raw.githubusercontent.com/8680/GOODBYEADS/master/data/rules/adblock.txt"
+            "url": "https://raw.githubusercontent.com/8680/GOODBYEADS/master/data/rules/allow.txt"
         }
     ]
 }
