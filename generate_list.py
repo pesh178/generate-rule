@@ -30,20 +30,9 @@ def filter_lines(content, rule):
     lines = content.splitlines()
     filtered_lines = []
     
-    # --- 正则定义 (基于您提供的 Clash 文档) ---
-    
-    # 1. 匹配 ||domain (匹配域名及其子域名) -> 转换为 +.domain
-    # Clash 文档: "+.baidu.com 匹配 tieba.baidu.com 和 ... baidu.com"
-    re_domain_suffix = re.compile(r'^\|\|([a-zA-Z0-9.-]+)(?:\^)?$')
-    
-    # 2. 匹配 |http开头 (起始锚点) -> 提取域名作为精确匹配
+    # 锚点正则保持不变 (用于处理 |http... 和 ...|)
     re_start_anchor = re.compile(r'^\|https?://([a-zA-Z0-9.-]+)(?:[:/].*|\||\^)?$')
-    
-    # 3. 匹配 结尾| (结束锚点) -> 提取域名作为精确匹配
     re_end_anchor = re.compile(r'^([a-zA-Z0-9.-]+)\|(?:\^)?$')
-
-    # 4. 匹配普通 AdBlock 格式 (||domain^)
-    re_basic_adblock = re.compile(r'^\|\|([a-zA-Z0-9.-]+)\^$')
 
     for line in lines:
         line = line.strip()
@@ -51,37 +40,35 @@ def filter_lines(content, rule):
             continue
             
         if rule['type'] == 'adblock':
-            # Case 1: ||domain -> 输出 +.domain (Clash "Plus" 通配符)
-            match_suffix = re_domain_suffix.match(line)
-            if match_suffix:
-                domain = match_suffix.group(1)
-                # 修改点：使用 +. 前缀，完美覆盖 根域名+子域名
-                filtered_lines.append(f"+.{domain}")
+            # --- 修复核心：使用 startswith 处理 ||，不再依赖严格正则 ---
+            
+            # Case 1: 以 || 开头 (AdBlock 核心规则)
+            if line.startswith('||'):
+                # 去掉开头的 || 和结尾的 ^
+                domain = line[2:].rstrip('^')
+                
+                # 策略：如果域名包含通配符 *，直接保留 (Clash 不支持 +.*)
+                # 否则，加上 +. 前缀 (Clash 推荐的子域名匹配)
+                if '*' in domain:
+                    filtered_lines.append(domain)
+                else:
+                    filtered_lines.append(f"+.{domain}")
                 continue
 
-            # Case 2: |http://... -> 精确匹配 (不加前缀)
+            # Case 2: |http... (起始锚点)
             match_start = re_start_anchor.match(line)
             if match_start:
-                domain = match_start.group(1)
-                filtered_lines.append(domain) 
+                filtered_lines.append(match_start.group(1))
                 continue
 
-            # Case 3: domain| -> 精确匹配 (不加前缀)
+            # Case 3: ...| (结束锚点)
             match_end = re_end_anchor.match(line)
             if match_end:
-                domain = match_end.group(1)
-                filtered_lines.append(domain)
+                filtered_lines.append(match_end.group(1))
                 continue
             
-            # Case 4: 普通 AdBlock ||domain^ -> +.domain
-            match_basic = re_basic_adblock.match(line)
-            if match_basic:
-                domain = match_basic.group(1)
-                filtered_lines.append(f"+.{domain}")
-                continue
-            
-            # Case 5: 纯域名或通配符 (*.baidu.com)
-            # 只要不包含 url 特殊字符，直接保留
+            # Case 4: 其他纯域名或通配符规则
+            # 只要不包含 URL 特殊字符，就认为是有效规则
             if not any(c in line for c in ['/', ':', '?']):
                  clean_line = line.rstrip('^')
                  filtered_lines.append(clean_line)
@@ -95,7 +82,6 @@ def generate_clash_domain_list(rule, domains, filename):
     data = {
         "payload": domains
     }
-    # 生成 Clash 规则文件
     content = yaml.dump(data, Dumper=QuotedDumper, sort_keys=False, allow_unicode=True)
     
     output_path = os.path.join('generated_rules', filename)
@@ -107,15 +93,17 @@ def generate_adguard_home_list(rule, domains, filename):
     lines = []
     for domain in domains:
         if rule['exclude_action'] == 'IGNORE':
-             # 还原逻辑：将 Clash 的 +. 转换回 AdGuard 的 ||
+             # 还原逻辑：
+             # 1. 遇到 +. 开头的，还原为 ||
              if domain.startswith('+.'):
-                 clean_domain = domain[2:] # 去掉 +.
+                 clean_domain = domain[2:]
                  lines.append(f"||{clean_domain}^")
              
-             # 处理其他情况（如精确匹配或带 * 的）
+             # 2. 遇到不含 * 的普通域名 (精确匹配)，还原为 || (覆盖更广)
              elif '*' not in domain and not domain.startswith('.'):
-                 # 精确匹配，AdGuard 通常也接受 || 覆盖，或者原样
                  lines.append(f"||{domain}^")
+             
+             # 3. 带 * 的规则，原样保留 (AdGuard 支持 *.example.com)
              else:
                  lines.append(domain)
     
