@@ -4,11 +4,17 @@ import json
 import os
 import re
 
-# --- 保持逻辑：自定义 Dumper 确保缩进格式 (你之前的需求) ---
-class IndentDumper(yaml.Dumper):
+# --- 1. 自定义 Dumper 类：强制缩进 + 强制单引号 ---
+class QuotedDumper(yaml.Dumper):
     def increase_indent(self, flow=False, indentless=False):
-        return super(IndentDumper, self).increase_indent(flow, False)
-# --------------------------------------------------------
+        return super(QuotedDumper, self).increase_indent(flow, False)
+
+# 强制字符串使用单引号 ' ' 风格
+def quoted_presenter(dumper, data):
+    return dumper.represent_scalar('tag:yaml.org,2002:str', data, style="'")
+
+QuotedDumper.add_representer(str, quoted_presenter)
+# -----------------------------------------------------------
 
 def download_file(url):
     try:
@@ -25,39 +31,46 @@ def filter_lines(content, rule):
     lines = content.splitlines()
     filtered_lines = []
     
+    # 预编译正则：匹配 ||example.com^
     adblock_pattern = re.compile(r'^\|\|([a-zA-Z0-9.-]+)\^$')
     
     for line in lines:
         line = line.strip()
+        # 跳过注释和空行
         if not line or line.startswith('!') or line.startswith('#'):
             continue
             
         if rule['type'] == 'adblock':
+            # 1. 尝试匹配 AdBlock 格式 ||domain^
             match = adblock_pattern.match(line)
             if match:
                 domain = match.group(1)
-                filtered_lines.append(domain)
-            elif not any(c in line for c in ['/', ':', '*', '?']):
+                # 【修改点】: AdBlock 规则自动加点前缀，符合您要求的 '.blogger.com' 格式
+                filtered_lines.append(f".{domain}")
+            
+            # 2. 尝试匹配纯域名或通配符域名
+            # 【修改点】: 允许 * 号存在，不再过滤 wildcard
+            elif not any(c in line for c in ['/', ':', '?']):
                  filtered_lines.append(line)
         
         elif rule['type'] == 'domain':
              filtered_lines.append(line)
 
+    # 去重并排序
     return sorted(list(set(filtered_lines)))
 
 def generate_clash_domain_list(rule, domains, filename):
-    # --- 新增需求：仅在此处给域名添加 DOMAIN-SUFFIX, 前缀 ---
-    # 注意：生成一个新列表 final_domains，不修改原 domains，
-    # 这样才不会影响后续 generate_adguard_home_list 的生成逻辑
-    final_domains = [f"DOMAIN-SUFFIX,{d}" for d in domains]
-    # ----------------------------------------------------
+    # 【修改点】: 不再添加 DOMAIN-SUFFIX 前缀，直接使用域名列表
+    final_domains = domains
 
+    # 使用小写 payload 以保持最大兼容性（Clash 标准）
+    # 如果您必须使用大写 Payload，请手动修改下方键名为 "Payload"
     payload = {
         "payload": final_domains
     }
     
-    # 保持逻辑：使用 IndentDumper 
-    content = yaml.dump(payload, Dumper=IndentDumper, sort_keys=False, allow_unicode=True)
+    # 使用自定义 QuotedDumper 确保输出格式为: - 'domain.com'
+    content = yaml.dump(payload, Dumper=QuotedDumper, sort_keys=False, allow_unicode=True)
     
     output_path = os.path.join('generated_rules', filename)
     with open(output_path, 'w', encoding='utf-8') as f:
@@ -69,7 +82,10 @@ def generate_adguard_home_list(rule, domains, filename):
     for domain in domains:
         if rule['exclude_action'] == 'IGNORE':
              # 保持逻辑：AdGuard 格式仍然是 ||domain^
-             lines.append(f"||{domain}^")
+             # 注意：如果是从 ||domain^ 转换来的 .domain，这里需要处理一下去除点？
+             # 或者简化处理，如果域名以 . 开头，去掉它再加 ||
+             clean_domain = domain.lstrip('.')
+             lines.append(f"||{clean_domain}^")
     
     content = "\n".join(lines)
     output_path = os.path.join('generated_rules', filename)
@@ -103,11 +119,11 @@ def main():
 
         filtered_domains = filter_lines(content, rule)
         
-        # 生成 Clash 格式 (带 DOMAIN-SUFFIX)
+        # 生成 Clash 格式 (新格式: Payload list)
         clash_filename = f"{rule['file_prefix']}-clash_reject_hostnames.yaml"
         generate_clash_domain_list(rule, filtered_domains, clash_filename)
 
-        # 生成 AdGuard Home 格式 (保持原样)
+        # 生成 AdGuard Home 格式
         agh_filename = f"{rule['file_prefix']}-rejection-unbound_dns.conf" 
         generate_adguard_home_list(rule, filtered_domains, agh_filename)
 
