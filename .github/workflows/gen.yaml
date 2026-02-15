@@ -16,6 +16,11 @@ jobs:
           python-version: '3.11' 
           
       - run: python generate_list.py
+
+      # --- 新增步骤：强制删除 .gitkeep ---
+      - name: Delete .gitkeep file
+        run: rm -f generated_rules/.gitkeep
+      # ----------------------------------
       
       - name: Generate release tag
         id: tag
@@ -26,8 +31,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.release_tag }}
-          # 修改处：使用 ! 排除 .gitkeep 文件
-          files: |
-            ./generated_rules/*
-            !./generated_rules/.gitkeep
+          # 此时目录下已无 .gitkeep，直接使用 * 即可
+          files: ./generated_rules/*
           token: ${{ secrets.GITHUB_TOKEN }}
