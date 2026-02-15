@@ -15,12 +15,17 @@ jobs:
         with:
           python-version: '3.11' 
           
+      # --- 👇 新增：安装 requests 和 pyyaml 库 👇 ---
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests pyyaml
+      # ---------------------------------------------
+
       - run: python generate_list.py
 
-      # --- 新增步骤：强制删除 .gitkeep ---
       - name: Delete .gitkeep file
         run: rm -f generated_rules/.gitkeep
-      # ----------------------------------
       
       - name: Generate release tag
         id: tag
@@ -31,6 +36,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.release_tag }}
-          # 此时目录下已无 .gitkeep，直接使用 * 即可
           files: ./generated_rules/*
           token: ${{ secrets.GITHUB_TOKEN }}
