@@ -58,7 +58,7 @@
             "action_type": "HOST-SUFFIX",
             "action": "REJECT",
             "exclude_action": "IGNORE",
-            "file_prefix": "White-adguard-dns",
+            "file_prefix": "adguard-dns",
             "url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/refs/heads/main/adblock/native.oppo-realme.txt"
         }
     ]
