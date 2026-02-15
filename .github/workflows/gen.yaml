@@ -10,18 +10,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11' 
+          
       - run: python generate_list.py
+      
       - name: Generate release tag
         id: tag
         run: |
           echo "release_tag=generate_$(date +"%Y.%m.%d_%H-%M")" >> $GITHUB_OUTPUT
+          
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.release_tag }}
+          # 修改处：使用 ! 排除 .gitkeep 文件
           files: |
             ./generated_rules/*
+            !./generated_rules/.gitkeep
           token: ${{ secrets.GITHUB_TOKEN }}
