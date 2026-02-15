@@ -35,13 +35,16 @@
     "servers": [],
     "rules_list": [
         {
-            "name": "AdGuard DNS Filter",
+            "name": "Combined AdBlock Filter",
             "type": "adblock",
             "action_type": "HOST-SUFFIX",
             "action": "REJECT",
             "exclude_action": "IGNORE",
             "file_prefix": "adguard-dns",
-            "url": "https://raw.githubusercontent.com/8680/GOODBYEADS/master/data/rules/dns.txt"
+            "url": [
+                "https://raw.githubusercontent.com/8680/GOODBYEADS/master/data/rules/dns.txt",
+                "https://raw.githubusercontent.com/hagezi/dns-blocklists/refs/heads/main/adblock/native.oppo-realme.txt"
+            ]
         },
         {
             "name": "White AdGuard DNS Filter",
@@ -51,15 +54,6 @@
             "exclude_action": "IGNORE",
             "file_prefix": "White-adguard-dns",
             "url": "https://raw.githubusercontent.com/8680/GOODBYEADS/master/data/rules/allow.txt"
-        },
-        {
-            "name": "HaGeZi's OPPO & Realme Tracker DNS Blocklist",
-            "type": "adblock",
-            "action_type": "HOST-SUFFIX",
-            "action": "REJECT",
-            "exclude_action": "IGNORE",
-            "file_prefix": "adguard-dns",
-            "url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/refs/heads/main/adblock/native.oppo-realme.txt"
         }
     ]
 }
