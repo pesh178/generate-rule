@@ -15,17 +15,51 @@ jobs:
         with:
           python-version: '3.11' 
           
-      # --- 👇 新增：安装 requests 和 pyyaml 库 👇 ---
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install requests pyyaml
-      # ---------------------------------------------
 
       - run: python generate_list.py
 
       - name: Delete .gitkeep file
         run: rm -f generated_rules/.gitkeep
+
+      # --- 👇 新增步骤 1：下载并配置 Mihomo 内核 👇 ---
+      - name: Setup Mihomo
+        run: |
+          echo "Fetching latest Mihomo version..."
+          # 使用 API 获取最新 Linux amd64 版本下载链接 (排除 compatible 版本)
+          DOWNLOAD_URL=$(curl -s https://api.github.com/repos/MetaCubeX/mihomo/releases/latest \
+            | grep "browser_download_url" \
+            | grep "linux-amd64-v" \
+            | grep ".gz" \
+            | head -n 1 \
+            | cut -d '"' -f 4)
+          
+          echo "Downloading from: $DOWNLOAD_URL"
+          wget -O mihomo.gz "$DOWNLOAD_URL"
+          gzip -d mihomo.gz
+          chmod +x mihomo
+          ./mihomo -v
+      # -----------------------------------------------
+
+      # --- 👇 新增步骤 2：将 YAML 编译为 MRS 👇 ---
+      - name: Convert to MRS
+        run: |
+          echo "Compiling rules to MRS format..."
+          # 遍历所有生成的 Clash YAML 文件
+          for file in generated_rules/*-clash_reject_hostnames.yaml; do
+            if [ -f "$file" ]; then
+              filename=$(basename -- "$file")
+              name="${filename%.*}"
+              # 编译命令: convert-ruleset domain yaml <输入> <输出>
+              # 注意：这里假设您的 YAML 内容是 payload 列表 (domain behavior)
+              ./mihomo convert-ruleset domain yaml "$file" "generated_rules/${name}.mrs"
+              echo "✅ Generated: generated_rules/${name}.mrs"
+            fi
+          done
+      # --------------------------------------------
       
       - name: Generate release tag
         id: tag
@@ -36,5 +70,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.release_tag }}
+          # 通配符 * 会自动上传该目录下所有的 .yaml, .conf 和 .mrs 文件
           files: ./generated_rules/*
           token: ${{ secrets.GITHUB_TOKEN }}
